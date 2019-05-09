@@ -147,7 +147,7 @@ class Language(object):
 
 class Task(object):
     task_re = re.compile('^;Task:\n(.*?)^==', re.MULTILINE | re.DOTALL)
-    intro_re = re.compile('^.*?^;Task:\n', re.MULTILINE | re.DOTALL)
+    intro_re = re.compile('^(.*?)\n;Task:\n', re.DOTALL)
     language_re = re.compile(r'\n==\{\{header\|(.*?)\}\}== *\n(.*?)(?=\n==\{|$)', re.DOTALL)
     language2_re = re.compile(r'\n==\{\{header\|([^}]*?)\}\} and \{\{header\|([^}]*?)\}\}== *\n(.*?)(?=\n==\{|$)', re.DOTALL)
 
@@ -169,6 +169,10 @@ class Task(object):
             page = cache_page(self.url, 'page-%s' % (self.wikiname.replace('/', '_'),))
             self._page = page
         return self._page
+
+    @property
+    def fsname(self):
+        return self.name.replace('/', '_').encode('utf-8')
 
     @property
     def edit(self):
@@ -234,6 +238,11 @@ class Task(object):
         if not isinstance(index, str):
             raise KeyError("Key for Task languages must be a string")
         return self.dict[index]
+
+    def get(self, index, default):
+        if not isinstance(index, str):
+            raise KeyError("Key for Task languages must be a string")
+        return self.dict.get(index, default)
 
     def keys(self):
         return self.dict.keys()
@@ -305,9 +314,48 @@ c = Category('C')
 
 import random
 
-if True:
-    tasks = c.tasks
+def fetchall(category):
+    tasks = category.tasks
     random.shuffle(tasks)
     for t in tasks:
         _ = t.edit
         print "%r" % (t,)
+
+
+language = 'C'
+extension = 'c'
+layout = 'riscos'
+code_dir = 'examples'
+include_intro = True
+include_task = True
+
+for task in c.tasks:
+    lang = task.get(language, None)
+    if not lang:
+        continue
+    for index, code in enumerate(lang.blocks):
+        variant = index + 1
+        if len(lang.blocks) > 1:
+            name = "%s__%s" % (task.fsname, variant)
+        else:
+            name = task.fsname
+        if layout == 'riscos':
+            filename = os.path.join(code_dir, extension, name)
+        else:
+            filename = os.path.join(code_dir, name + '.' + extension)
+
+        #if os.path.isfile(filename):
+        #    continue
+
+        dirname = os.path.dirname(filename)
+        if not os.path.isdir(dirname):
+            os.makedirs(dirname)
+        print("File: %s" % (filename,))
+        with open(filename, 'w') as fh:
+            if include_intro and task.intro:
+                fh.write("/*\n%s\n*/\n\n" % (task.intro.encode('utf-8'),))
+            if include_intro and task.task:
+                fh.write("/* TASK:\n%s\n*/\n\n" % (task.task.encode('utf-8'),))
+            fh.write(code.code.encode('utf-8'))
+            # Ensure we always end on a newline
+            fh.write("\n")
