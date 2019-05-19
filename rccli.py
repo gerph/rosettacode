@@ -94,7 +94,7 @@ def write_tasks_dir(tasks, code_dir='code',
     for task in tasks:
         for lang in task.values():
             # This won't be right for many files, but let's be consistent
-            extension = lang.name.lower().replace('/', '.')
+            extension = lang.name.lower().replace('/', '.').replace(' ', '_').encode('utf-8')
 
             for index, code in enumerate(lang.blocks):
                 variant = index + 1
@@ -105,7 +105,8 @@ def write_tasks_dir(tasks, code_dir='code',
                 if layout == 'riscos':
                     filename = os.path.join(code_dir, extension, name)
                 else:
-                    filename = os.path.join(code_dir, name + '.' + extension)
+                    leafname = '%s.%s' % (name, extension)
+                    filename = os.path.join(code_dir, leafname)
 
                 dirname = os.path.dirname(filename)
                 if not os.path.isdir(dirname):
@@ -147,6 +148,8 @@ def main():
                         help="Report the elements as JSON")
     parser.add_argument('--dir', type=str, default=None,
                         help="Report results to a directory structure")
+    parser.add_argument('--layout', choices=('unix', 'riscos'), default='unix',
+                        help="Layout of the directory structure ('unix' or 'riscos')")
 
     parser.add_argument('--file', type=str, default=None,
                         help="Report results to a file (for list, and json)")
@@ -156,8 +159,14 @@ def main():
     result = None
 
     if options.category:
+        # This will be UTF-8 encoded, so we need to decode to the unicode we use
+        # internally.
+        options.category = options.category.decode('utf-8')
         result = Category(options.category)
     elif options.task:
+        # What they supplied will be UTF-8 encoded; so let's decode it to get
+        # the unicode name that we expect internall.
+        options.task = options.task.decode('utf-8')
         result = Task(options.task)
 
     if result is None:
@@ -223,7 +232,6 @@ def main():
 
     elif options.dir:
         # They wanted a directory dump
-        layout = 'unix'
         code_dir = options.dir
 
         tasks = []
@@ -233,7 +241,7 @@ def main():
             tasks = result.tasks
 
         write_tasks_dir(tasks, code_dir,
-                        layout=layout,
+                        layout=options.layout,
                         include_task=True,
                         include_intro=True)
 

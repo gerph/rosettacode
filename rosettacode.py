@@ -211,10 +211,12 @@ class Task(object):
 
     """
     Read the details about a task.
+
+    @param name:    The name of the page, as a unicode string (not UTF-8 encoded)
     """
-    def __init__(self, wikiname):
-        self.wikiname = wikiname
-        self.name = unquote(wikiname)
+    def __init__(self, name):
+        self.wikiname = name.encode('utf-8')
+        self.name = unquote(name)
         self.url = '%s/mw/index.php?title=%s&action=edit' % (base_url, self.wikiname)
         self._page = None
         self._edit = None
@@ -394,7 +396,8 @@ class Category(object):
                             if atag.get('href', None):
                                 match = self.match_re.search(atag['href'])
                                 if match:
-                                    self._links.append((atag['title'], match.group(1)))
+                                    linkname = unquote(str(match.group(1))).decode('utf-8')
+                                    self._links.append((atag['title'], linkname))
                     ele = ele.nextSibling
         return self._links
 
@@ -410,7 +413,7 @@ class Category(object):
     @property
     def tasks(self):
         if self._tasks is None:
-            tasks = [Task(wikiname) for _, wikiname in self.links]
+            tasks = [Task(name) for _, name in self.links]
 
             # Apply any filters
             tasks = [task for task in tasks if self.task_filter(task)]
