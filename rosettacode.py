@@ -55,10 +55,10 @@ import requests
 
 try:
     # Python 3
-    from urllib.parse import unquote
+    from urllib.parse import unquote, quote
 except ImportError:
     # Python 2
-    from urllib import unquote
+    from urllib import unquote, quote
 
 from BeautifulSoup import BeautifulSoup
 
@@ -215,7 +215,7 @@ class Task(object):
     @param name:    The name of the page, as a unicode string (not UTF-8 encoded)
     """
     def __init__(self, name):
-        self.wikiname = name.encode('utf-8')
+        self.wikiname = quote(name.encode('utf-8'))
         self.name = unquote(name)
         self.url = '%s/mw/index.php?title=%s&action=edit' % (base_url, self.wikiname)
         self._page = None

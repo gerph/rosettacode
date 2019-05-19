@@ -118,7 +118,7 @@ def write_tasks_dir(tasks, code_dir='code',
                     if include_intro and task.intro:
                         fh.write(comment(lang.name, "\n" + task.intro.encode('utf-8', 'replace')) + "\n")
                     if include_task and task.task:
-                        fh.write(comment(lang.name, "TASK:\n" + task.task.encode('utf-8', 'replace')) + "\n")
+                        fh.write(comment(lang.name, " TASK:\n" + task.task.encode('utf-8', 'replace')) + "\n")
                     fh.write(code.code.encode('utf-8'))
                     # Ensure we always end on a newline
                     fh.write("\n")
@@ -212,7 +212,8 @@ def main():
             if options.count and not options.languages and not options.tasks:
                 fh.write("%s\n" % (len(result.tasks),))
             else:
-                for task in result.tasks:
+                tasks = result.tasks
+                for task in tasks:
                     if options.count and not options.tasks:
                         fh.write("%s (%s)\n" % (task.name, len(task.languages)))
                     else:
