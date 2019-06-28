@@ -76,7 +76,10 @@ def comment(language, block):
     if language in ('C', 'C++'):
         return "/*%s\n*/\n" % (block,)
 
-    prefix = "# "
+    if language == 'BBC BASIC':
+        prefix = 'REM '
+    else:
+        prefix = "# "
     lines = [prefix + line + "\n" for line in block.splitlines()]
     return "".join(lines)
 

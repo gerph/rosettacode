@@ -348,8 +348,9 @@ class Category(object):
     match_re = re.compile('^/wiki/([A-Za-z0-9_/%]+)$')
 
     def __init__(self, category):
-        self.category = category
-        self.url = '%s/wiki/Category:%s' % (base_url, self.category)
+        self.wikicategory = quote(category.encode('utf-8')).replace('%20', '_')
+        self.category = unquote(category)
+        self.url = '%s/wiki/Category:%s' % (base_url, self.wikicategory)
         self._page = None
         self._links = None
         self._tasks = None
@@ -374,7 +375,7 @@ class Category(object):
     @property
     def page(self):
         if not self._page:
-            page = cache_page(self.url, 'category-%s' % (self.category,))
+            page = cache_page(self.url, 'category-%s' % (self.wikicategory,))
             self._page = page
         return self._page
 
@@ -413,6 +414,9 @@ class Category(object):
     @property
     def tasks(self):
         if self._tasks is None:
+            if self.links is None:
+                # No links recognised, so we have to give up.
+                return []
             tasks = [Task(name) for _, name in self.links]
 
             # Apply any filters
